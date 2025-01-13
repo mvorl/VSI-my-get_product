@@ -21,6 +21,6 @@ dependencies = [
 requires = ["setuptools >= 65.0"]
 build-backend = "setuptools.build_meta"
 
-#[project.urls]
-#Homepage = "https://github.com/pypa/sampleproject"
-#Issues = "https://github.com/pypa/sampleproject/issues"
+[project.urls]
+Homepage = "https://github.com/mvorl/VSI-my-get_product"
+Issues = "https://github.com/mvorl/VSI-my-get_product/issues"
