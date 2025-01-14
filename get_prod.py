@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-
 from pathlib import Path
 import requests
 import re
 import json
-import shutil
+# import shutil
+import wget
+import ssl
 import warnings
 
 from bs4 import BeautifulSoup
@@ -140,12 +141,15 @@ class Product(Products):
             return
         for i, name in enumerate(self.data_list.keys()):
             if i in indices:
-                print(f'Downloading {name} ', end='')
-                response = self.session.get(self.data_list[name], stream=True, verify=SSL_VERIFY)
-                response.raise_for_status()
-                with open(name, 'wb') as f:
-                    shutil.copyfileobj(response.raw, f)
-                print('- Done.')
+                # print(f'Downloading {name} ', end='')
+                # response = self.session.get(self.data_list[name], stream=True, verify=SSL_VERIFY)
+                # response.raise_for_status()
+                # with open(name, 'wb') as f:
+                #     shutil.copyfileobj(response.raw, f)
+                # print('- Done.')
+                print(f'Downloading {name} ', flush=True)
+                ssl._create_default_https_context = ssl._create_unverified_context  # noqa
+                wget.download(self.data_list[name], name)
 
 
 def parse_input(inp: str, max_idx: int) -> IndexList | None:
