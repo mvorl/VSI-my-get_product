@@ -163,7 +163,7 @@ def parse_input(inp: str, max_idx: int) -> IndexList | None:
             hi = int(m.group(2)) - 1
             if lo > hi:
                 lo, hi = hi, lo
-        if lo < 9 or hi >= max_idx:
+        if lo < 0 or hi >= max_idx:
             return None
         indices |= set(range(lo, hi + 1))
     return sorted(indices)
