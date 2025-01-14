@@ -149,7 +149,7 @@ class Product(Products):
                 # print('- Done.')
                 print(f'Downloading {name} ', flush=True)
                 ssl._create_default_https_context = ssl._create_unverified_context  # noqa
-                wget.download(self.data_list[name], name)
+                wget.download(self.data_list[name], name, bar=None)
 
 
 def parse_input(inp: str, max_idx: int) -> IndexList | None:
