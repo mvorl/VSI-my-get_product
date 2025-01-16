@@ -1,10 +1,11 @@
 #!/usr/bin/env python
+import sys
 from pathlib import Path
 import requests
 import re
 import json
 # import shutil
-import wget
+# import wget
 import ssl
 import warnings
 
@@ -41,6 +42,46 @@ HELP_TEXT = """
     specified in any order, smallest to highest, or highest to smallest.
     For example: 1-3, 5, 7, 11-9
 """
+
+
+def _download_callback_progress(blocks, block_size, total_size):
+    current_size = min(blocks*block_size, total_size)
+    sys.stdout.write(f"\r{current_size} / {total_size}")
+
+def _my_wget_download(url, out, bar=None):
+    """Stripped down downloader copied from wget module"""
+    import shutil, os
+    import tempfile
+    import urllib.request as ulib
+    import urllib.parse as urlparse
+    from wget import detect_filename, filename_fix_existing
+
+    prefix = detect_filename(url, out)
+    (fd, tmpfile) = tempfile.mkstemp(".tmp", prefix=prefix, dir=".")
+    os.close(fd)
+    os.unlink(tmpfile)
+
+    if sys.version_info >= (3, 0):
+        # Python 3 can not quote URL as needed
+        binurl = list(urlparse.urlsplit(url))
+        binurl[2] = urlparse.quote(binurl[2])
+        binurl = urlparse.urlunsplit(binurl)
+    else:
+        binurl = url
+
+    (tmpfile, headers) = ulib.urlretrieve(binurl, tmpfile, _download_callback_progress)
+    filename = detect_filename(url, out, headers)
+    # add numeric ' (x)' suffix if filename already exists
+    if os.path.exists(filename):
+        filename = filename_fix_existing(filename)
+    shutil.move(tmpfile, filename)
+    return filename
+
+if sys.platform == 'OpenVMS':
+    wget_download = _my_wget_download
+else:
+    import wget
+    wget_download = wget.download
 
 
 class Products:
@@ -149,7 +190,7 @@ class Product(Products):
                 # print('- Done.')
                 print(f'Downloading {name} ', flush=True)
                 ssl._create_default_https_context = ssl._create_unverified_context  # noqa
-                wget.download(self.data_list[name], name, bar=None)
+                wget_download(self.data_list[name], name, bar=None)
 
 
 def parse_input(inp: str, max_idx: int) -> IndexList | None:
