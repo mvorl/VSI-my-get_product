@@ -2,7 +2,7 @@
 name = "VSI-my-get_product"
 version = "0.0.1"
 authors = [
-    { name="Martin Vorländer", email="martin.vorlaender@t-online.de" },
+    { name = "Martin Vorländer", email = "martin.vorlaender@t-online.de" },
 ]
 description = "A small program to list and download new versions of VSI's open source products"
 readme = "README.md"
@@ -14,7 +14,9 @@ classifiers = [
 ]
 dependencies = [
     'requests >= 2.32',
-    'bs4 >= 0.0.2',
+    'beautifulsoup4 >= 4.12',
+    'soupsieve >= 2.6',
+    'wget >= 3.2',
 ]
 
 [build-system]

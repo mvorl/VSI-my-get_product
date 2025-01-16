@@ -1,3 +1,4 @@
-requests
-bs4
-wget
+requests >= 2.32
+beautifulsoup4 >= 4.12
+soupsieve >= 2.6
+wget >= 3.2
