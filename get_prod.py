@@ -23,6 +23,9 @@ PROD_DOWNLOAD_CSS = '.single-solution__downloads-list'
 PROD_REGEXP = re.compile(r'(https?://vmssoftware.com/openkits/(?:alp|i64|x86)opensource/([^.]+\.zip(?:exe)?))',
                          flags=re.IGNORECASE)
 
+# Platforms dict, product list key -> display string
+PLATFORMS = {'alpha': 'AXP', 'integrity': 'I64', 'x86': 'x86'}
+
 # Use cache? And where should it be?
 USE_CACHE = True
 CACHE_DIR = Path(__file__).parent / 'cache'
@@ -90,10 +93,10 @@ else:
 
 class Products:
     session = requests.Session()
-    PLATFORM = {'alpha': 'AXP', 'integrity': 'I64', 'x86': 'x86'}
 
-    def __init__(self):
+    def __init__(self, platforms: list[str] = tuple(PLATFORMS.keys())):
         self.data_list = None
+        self.platforms = platforms
         self.link = PROD_LIST_LINK
         self.cache_file = CACHE_DIR / 'products.html'
 
@@ -136,12 +139,14 @@ class Products:
             prod['_index'] = idx
             idx += 1
             entry = prod['title']
-            for platform in ('alpha', 'integrity', 'x86'):
+            for platform in sorted(PLATFORMS.keys()):
+                if platform not in self.platforms:
+                    continue
                 version = prod[platform]
                 if version and version != 'not ported':  # special case for GNUplot x86
                     rel_date_key = 'release_date' if platform == 'x86' else f'{platform}_release_date'
                     rel_date = prod[rel_date_key]
-                    entry += f"\n{' ' * (3 + len(' - '))}{self.PLATFORM[platform]}: {version} ({rel_date})"
+                    entry += f"\n{' ' * (3 + len(' - '))}{PLATFORMS[platform]}: {version} ({rel_date})"
             lst.append(entry)
         return lst
 
@@ -251,8 +256,25 @@ def display_and_select_from_list(entries: DisplayList, title: str) -> IndexList:
         return indices
 
 
+def parse_parameters() -> list[str]:
+    if len(sys.argv) == 1:
+        return list(PLATFORMS.keys())
+
+    platforms = []
+    for arg in sys.argv[1:]:
+        if arg.lower() in PLATFORMS.keys():
+            platforms.append(arg.lower())
+    return platforms
+
+
 def main():
-    products = Products()
+    platforms = parse_parameters()
+    if not platforms:
+        print('Error: Invalid value for platform.')
+        print(f'Supported values are {", ".join(PLATFORMS.keys())}')
+        return
+
+    products = Products(platforms)
     prod_list = products.get_data_list()
 
     while True:
