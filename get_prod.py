@@ -1,13 +1,14 @@
 #!/usr/bin/env python
-import sys
-from pathlib import Path
 import requests
-import re
 import json
+import re
+import ssl
+import sys
 # import shutil
 # import wget
-import ssl
+import urllib.parse as urlparse
 import warnings
+from pathlib import Path
 
 from bs4 import BeautifulSoup
 
@@ -45,15 +46,16 @@ HELP_TEXT = """
 
 
 def _download_callback_progress(blocks, block_size, total_size):
-    current_size = min(blocks*block_size, total_size)
+    current_size = min(blocks * block_size, total_size)
     sys.stdout.write(f"\r{current_size} / {total_size}")
+
 
 def _my_wget_download(url, out, bar=None):
     """Stripped down downloader copied from wget module"""
-    import shutil, os
+    import shutil
+    import os
     import tempfile
     import urllib.request as ulib
-    import urllib.parse as urlparse
     from wget import detect_filename, filename_fix_existing
 
     prefix = detect_filename(url, out)
@@ -64,7 +66,7 @@ def _my_wget_download(url, out, bar=None):
     if sys.version_info >= (3, 0):
         # Python 3 can not quote URL as needed
         binurl = list(urlparse.urlsplit(url))
-        binurl[2] = urlparse.quote(binurl[2])
+        binurl[2] = urlparse.quote(binurl[2])  # noqa
         binurl = urlparse.urlunsplit(binurl)
     else:
         binurl = url
@@ -77,10 +79,12 @@ def _my_wget_download(url, out, bar=None):
     shutil.move(tmpfile, filename)
     return filename
 
+
 if sys.platform == 'OpenVMS':
     wget_download = _my_wget_download
 else:
     import wget
+
     wget_download = wget.download
 
 
@@ -152,7 +156,7 @@ class Product(Products):
     def __init__(self, product: ProductInfo):
         super().__init__()
         self.product = product
-        self.link = PROD_BASE_LINK + product['link']['url']['href']
+        self.link = urlparse.urljoin(PROD_BASE_LINK, product['link']['url']['href'])  # noqa
         self.cache_file = CACHE_DIR / f"product-{product['id']}.html"
 
     def _get_data(self) -> bool:
@@ -167,8 +171,9 @@ class Product(Products):
             if m:
                 name = m.group(2)
                 # For whatever reason, link URLs have a non-functional http schema
-                link = m.group(1).replace('http:', 'https:')
-                self.data_list[name] = link
+                url = list(urlparse.urlsplit(m.group(1)))
+                url[0] = 'https'  # noqa
+                self.data_list[name] = urlparse.urlunsplit(url)
         return len(self.data_list) != 0
 
     def get_data_list(self) -> DisplayList:
@@ -223,7 +228,7 @@ def display_and_select_from_list(entries: DisplayList, title: str) -> IndexList:
     while True:
         print('\n' + title + ':')
         for i, entry in enumerate(entries):
-            print(f'{i+1:>3} - {entry}')
+            print(f'{i + 1:>3} - {entry}')
         print(f'{all_entries:>3} - All of the above')
         print(f"{'?':>3} - Help")
         print(f"{'E':>3} - Exit")
